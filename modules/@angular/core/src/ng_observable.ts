@@ -1,8 +1,17 @@
 import { Observable } from 'rxjs';
 
+interface NgObservable<T> extends Observable<T> {
+  (): NgObservableCreator;
+}
+
+interface NgObservableCreator extends Rx.ObservableStatic {
+  new(options: { keep: boolean }): NgObservableCreator;
+  readonly keep: NgObservableCreator;
+}
+
 // Creates new Observable instances through its prototypical methods.
 // The constructor only holds options which should be applied to these instances
-function NgObservableCreator(options) {
+function NgObservableCreator(options: { keep: boolean }) {
   this._keep = options.keep;
 }
 
@@ -11,7 +20,7 @@ function NgObservableCreator(options) {
 // be correlated with the currently installed Observable API
 NgObservableCreator.prototype = Object
   .keys(Observable)
-  .filter(key => typeof Observable[key] == "function")
+  .filter((key) => typeof Observable[key] == "function")
   .reduce((prototype, methodName) => {
     const methodHandler = function () {
       const observable = Observable[methodName].apply(Observable, arguments);
@@ -40,7 +49,7 @@ Object.defineProperty(NgObservableCreator.prototype, "keep", {
 // An explicit function was used instead of class since we return an instance of
 // a different prototype. An @Injectable is not needed since we don't inject any
 // services whatsoever to the function below
-function NgObservable() {
+function NgObservable(): NgObservableCreator {
   // Created observables components are gonna be automatically disposed once their
   // belonging components are being destroyed,
   // e.g. this.observable.of([1, 2, 3]);

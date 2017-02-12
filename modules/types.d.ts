@@ -13,5 +13,6 @@
 /// <reference path="../node_modules/@types/jasmine/index.d.ts" />
 /// <reference path="../node_modules/@types/node/index.d.ts" />
 /// <reference path="../node_modules/@types/selenium-webdriver/index.d.ts" />
+/// <reference path="../node_modules/@types/rx/index.d.ts" />
 /// <reference path="./es6-subset.d.ts" />
 /// <reference path="./system.d.ts" />
