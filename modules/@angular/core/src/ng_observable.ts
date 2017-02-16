@@ -1,68 +1,81 @@
-import { Observable } from 'rxjs';
+import { Observable } from "rxjs";
 
 /* Declarations */
 
-interface NgObservable<T> extends Observable<T> {
+// Save duplicate importations
+export interface NgObservable<T> extends Observable<T> {
+  _keep: boolean;
 };
 
-interface NgObservableCreator extends Rx.ObservableStatic {
-  new(options: { keep: boolean }): NgObservableCreator;
-  readonly keep: NgObservableCreator;
+// Will define a dynamic interface based on the current version of "rxjs" installed
+export interface NgObservableStatic extends Rx.ObservableStatic {
+  readonly keep: NgObservableStatic;
 };
 
 /* Implementations */
+
+// Creates new Observable instances through its prototypical methods.
+// The constructor only holds options which should be applied to these instances
+export class NgObservableStatic {
+  private _keep: boolean;
+
+  constructor({ keep }: { keep?: boolean } = {}) {
+    this._keep = !!keep;
+  }
+}
 
 // Solves "Index signature is missing in type" error:
 // https://github.com/Microsoft/TypeScript/issues/1887
 const IterableObserver = Observable as { [key: string]: any };
 
-// This should be an angular service.
-// An explicit function was used instead of class since we return an instance of
-// a different prototype. An @Injectable is not needed since we don't inject any
-// services whatsoever to the function below
-function NgObservable() {
-  // Created observables components are gonna be automatically disposed once their
-  // belonging components are being destroyed,
-  // e.g. this.observable.of([1, 2, 3]);
-  return new NgObservableCreator({ keep: false }) as NgObservableCreator;
-}
-
-// NgObservable and Observable instances share the same prototype,
-// This way we won't ever have to import the Observable directly
-NgObservable.prototype = Observable.prototype;
-
-// Creates new Observable instances through its prototypical methods.
-// The constructor only holds options which should be applied to these instances
-function NgObservableCreator(options: { keep: boolean }) {
-  this._keep = options.keep;
-}
-
 // Delegating all kind of Observable factory functions like 'of', 'from' etc.
 // The advantages of automatically generated prototype are that we're always gonna
 // be correlated with the currently installed Observable API
-NgObservableCreator.prototype = Object
-  .keys(Observable)
-  .filter((key) => typeof IterableObserver[key] == "function")
-  .reduce((prototype, methodName) => {
+Object.keys(Observable).forEach((key) => {
+  const value = IterableObserver[key];
+
+  // Delegate function
+  if (typeof value == "function") {
     const methodHandler = function () {
-      const observable = IterableObserver[methodName].apply(Observable, arguments);
-      observable._keep = this._keep;
+      const observable = value.apply(Observable, arguments);
+
+      if (observable instanceof Observable) {
+        const ngObservable = observable as NgObservable<any>;
+        ngObservable._keep = this._keep;
+      }
+
       return observable;
     };
 
-    return Object.defineProperty(prototype, methodName, {
+    Object.defineProperty(NgObservableStatic.prototype, key, {
       configurable: true,
+      enumerable: true,
       writable: true,
       value: methodHandler
     });
-  }, {});
+  }
+  // Delegate value
+  else {
+    Object.defineProperty(NgObservableStatic.prototype, key, {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return IterableObserver[key];
+      },
+      set(value) {
+        return IterableObserver[key] = value;
+      }
+    });
+  }
+});
 
-// The keep getter will make sure that created observables won't be disposed
+// The "keep" getter will make sure that created observables won't be disposed
 // automatically once their belonging components are being destroyed,
 // e.g. this.observable.keep.of([1, 2, 3]);
-Object.defineProperty(NgObservableCreator.prototype, "keep", {
+Object.defineProperty(NgObservableStatic.prototype, "keep", {
   configurable: true,
-  get: function () {
-    return new NgObservableCreator({ keep: true });
+  enumerable: true,
+  get() {
+    return new NgObservableStatic({ keep: true });
   }
 });

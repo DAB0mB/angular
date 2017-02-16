@@ -34,6 +34,7 @@
     "@types/hammerjs": "^2.0.33",
     "@types/jasmine": "^2.2.22-alpha",
     "@types/node": "^4.0.22-alpha",
+    "@types/rx": "^4.1.1",
     "@types/selenium-webdriver": "^2.53.35",
     "@types/systemjs": "^0.19.32",
     "angular": "^1.5.0",
@@ -97,5 +98,4 @@
     "yargs": "^3.31.0",
     "yarn": "^0.19.1"
   }
-
 }
