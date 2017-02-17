@@ -8,15 +8,15 @@ export interface NgObservable<T> extends Observable<T> {
 };
 
 // Will define a dynamic interface based on the current version of "rxjs" installed
-export interface NgObservableStatic extends Rx.ObservableStatic {
-  readonly keep: NgObservableStatic;
+export interface NgObservableService extends Rx.ObservableStatic {
+  readonly keep: NgObservableService;
 };
 
 /* Implementations */
 
 // Creates new Observable instances through its prototypical methods.
 // The constructor only holds options which should be applied to these instances
-export class NgObservableStatic {
+export class NgObservableService {
   private _keep: boolean;
 
   constructor({ keep }: { keep?: boolean } = {}) {
@@ -47,7 +47,7 @@ Object.keys(Observable).forEach((key) => {
       return observable;
     };
 
-    Object.defineProperty(NgObservableStatic.prototype, key, {
+    Object.defineProperty(NgObservableService.prototype, key, {
       configurable: true,
       enumerable: true,
       writable: true,
@@ -56,7 +56,7 @@ Object.keys(Observable).forEach((key) => {
   }
   // Delegate value
   else {
-    Object.defineProperty(NgObservableStatic.prototype, key, {
+    Object.defineProperty(NgObservableService.prototype, key, {
       configurable: true,
       enumerable: true,
       get() {
@@ -72,10 +72,10 @@ Object.keys(Observable).forEach((key) => {
 // The "keep" getter will make sure that created observables won't be disposed
 // automatically once their belonging components are being destroyed,
 // e.g. this.observable.keep.of([1, 2, 3]);
-Object.defineProperty(NgObservableStatic.prototype, "keep", {
+Object.defineProperty(NgObservableService.prototype, "keep", {
   configurable: true,
   enumerable: true,
   get() {
-    return new NgObservableStatic({ keep: true });
+    return new NgObservableService({ keep: true });
   }
 });
